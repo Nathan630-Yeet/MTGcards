@@ -16,7 +16,7 @@ app.get('/check-card', async (req, res) => {
     if (!response.ok) return res.status(404).json({ error: 'Card not found.' });
     const card = await response.json();
 
-    if (card.set !== 'fdn') {
+    if (card.set !== 'tdm') {
       return res.json({ card_name: card.name, in_set: false });
     }
 
@@ -26,19 +26,19 @@ app.get('/check-card', async (req, res) => {
     if (rarity === 'common') {
       const commonSlot = 1 - Math.pow((1 - 1/80), 7);
       const wildcardSlot = 2 * (17.78/100) * (1/80);
-      probability = commonSlot + wildcardSlot;
+      probability = 1- ((1-commonSlot)*(1-wildcardSlot));
     } else if (rarity === 'uncommon') {
       const uncommonSlot = 1 - Math.pow((1 - 1/100), 3);
       const wildcardSlot = 2 * (62.08/100) * (1/100);
-      probability = uncommonSlot + wildcardSlot;
+      probability = 1- ((1-uncommonSlot)*(1-wildcardSlot));
     } else if (rarity === 'rare') {
       const rareSlot = (85.7/100) * (1/60);
       const wildcardSlot = 2 * (17.35/100) * (1/60);
-      probability = rareSlot + wildcardSlot;
+      probability = 1- ((1-rareSlot)*(1-wildcardSlot));
     } else if (rarity === 'mythic') {
       const mythicSlot = (14.3/100) * (1/20);
       const wildcardSlot = 2 * (2.7/100) * (1/20);
-      probability = mythicSlot + wildcardSlot;
+      probability = 1- ((1-mythicSlot)*(1-wildcardSlot));
     }
 
     res.json({
