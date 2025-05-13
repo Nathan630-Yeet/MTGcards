@@ -1,8 +1,9 @@
-
-const express = require('express');
+import express from 'express';
+import fetch from 'node-fetch';
+//const express = require('express');
 const app = express();
 const PORT = 3000;
-const fetch = require('node-fetch');
+console.log(fetch)
 
 const setOdds = {
   tdm: {
@@ -11,7 +12,6 @@ const setOdds = {
     rare: { baseRate: 85.7, poolSize: 60, wildcardRate: 17.35, wildcardCount: 2 },
     mythic: { baseRate: 14.3, poolSize: 20, wildcardRate: 2.7, wildcardCount: 2 }
   },
-  // Add more sets here using same format as above
 };
 
 function calculateOdds(rarity, config) {

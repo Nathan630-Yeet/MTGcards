@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MTG Card Odds Checker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>MTG Card Odds Checker</h1>
+    <form id="cardForm">
+      <label for="cardName">Card Name:</label>
+      <input type="text" id="cardName" name="cardName" required />
+
+      <label for="setCode">Set Code:</label>
+      <input type="text" id="setCode" name="setCode" required />
+
+      <button type="submit">Check Odds</button>
+    </form>
+
+    <div id="result"></div>
+    <canvas id="oddsChart" width="400" height="300"></canvas>
+  </div>
+
+  <script>
+    document.getElementById('cardForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const name = document.getElementById('cardName').value;
+      const set = document.getElementById('setCode').value;
+
+      const res = await fetch(`/check-card?name=${encodeURIComponent(name)}&set=${set}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        document.getElementById('result').innerHTML = `<p>Error: ${data.error}</p>`;
+        return;
+      }
+
+      const odds = parseFloat(data.estimated_odds.replace('%', '')) / 100;
+
+      // Calculate cumulative probabilities
+      const packs = Array.from({ length: 30 }, (_, i) => i + 1);
+      const probabilities = packs.map(n => 1 - Math.pow(1 - odds, n));
+
+      // Show stats
+      let stats = `
+        <strong>${data.card_name}</strong> (${data.rarity})<br/>
+        Estimated Odds in One Pack: ${(odds * 100).toFixed(2)}%<br/>
+        Odds of <u>NOT</u> getting this card in 30 packs: ${(Math.pow(1 - odds, 30) * 100).toFixed(2)}%<br/>
+        Odds of getting at least one in:<br/>
+        - 5 packs: ${(100 * (1 - Math.pow(1 - odds, 5))).toFixed(2)}%<br/>
+        - 10 packs: ${(100 * (1 - Math.pow(1 - odds, 10))).toFixed(2)}%<br/>
+        - 20 packs: ${(100 * (1 - Math.pow(1 - odds, 20))).toFixed(2)}%<br/>
+        - 30 packs: ${(100 * (1 - Math.pow(1 - odds, 30))).toFixed(2)}%<br/>
+      `;
+      document.getElementById('result').innerHTML = stats;
+
+      // Draw chart
+      const ctx = document.getElementById('oddsChart').getContext('2d');
+      if (window.oddsChart) {
+        window.oddsChart.destroy(); // Clear previous chart
+      }
+      window.oddsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: packs,
+          datasets: [{
+            label: 'Chance of Getting the Card',
+            data: probabilities.map(p => (p * 100).toFixed(2)),
+            borderColor: 'rgba(75, 192, 192, 1)',
+            tension: 0.25,
+            fill: true,
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: 'Number of Packs' } },
+            y: {
+              title: { display: true, text: 'Chance (%)' },
+              min: 0, max: 100
+            }
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
