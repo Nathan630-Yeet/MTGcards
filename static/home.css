@@ -1,52 +1,90 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
-    padding: 2rem;
-  }
-  
-  
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+  margin: 0;
+  padding: 2rem;
+}
+
+/* Base: Mobile layout */
+.container {
+  width: 100%;
+  max-width: 600px;
+  margin: auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive layout for wider screens */
+@media (min-width: 900px) {
   .container {
-    max-width: 500px;
-    margin: auto;
-    background: white;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    max-width: 100%;
+    padding: 3rem 5rem;
   }
-  
-  h1 {
-    text-align: center;
-    color: #333;
-  }
-  
-  form {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  label, input, button {
-    margin: 0.5rem 0;
-  }
-  
-  input {
-    padding: 0.5rem;
-    font-size: 1rem;
-  }
-  
-  button {
-    background-color: #333;
-    color: white;
-    border: none;
-    padding: 0.7rem;
-    font-size: 1rem;
-    cursor: pointer;
-  }
-  
-  button:hover {
-    background-color: #555;
-  }
-  
+
   #result {
-    margin-top: 1rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 3rem;
   }
-  
+
+  #result > div {
+    flex: 1;
+  }
+
+  #cardImages {
+    display: flex !important;
+    gap: 2rem;
+    justify-content: center;
+  }
+
+  #cardImages > div {
+    flex: 1;
+    max-width: 400px;
+  }
+
+  canvas {
+    max-width: 100%;
+    margin-top: 2rem;
+  }
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+label, input, select, button {
+  margin: 0.5rem 0;
+}
+
+input, select {
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+button {
+  background-color: #333;
+  color: white;
+  border: none;
+  padding: 0.7rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #555;
+}
+
+#result {
+  margin-top: 2rem;
+}
+
+.card-section {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  background: #fafafa;
+}

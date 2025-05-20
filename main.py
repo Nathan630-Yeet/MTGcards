@@ -10,6 +10,18 @@ set_odds = {
         "uncommon": {"slots": 3, "poolSize": 100, "wildcardRate": 62.08, "wildcardCount": 2},
         "rare": {"baseRate": 85.7, "poolSize": 60, "wildcardRate": 17.35, "wildcardCount": 2},
         "mythic": {"baseRate": 14.3, "poolSize": 20, "wildcardRate": 2.7, "wildcardCount": 2}
+    },
+    "lci": {
+        "common": {"slots": 10, "poolSize": 110, "wildcardRate": 20, "wildcardCount": 2},
+        "uncommon": {"slots": 3, "poolSize": 80, "wildcardRate": 50, "wildcardCount": 1},
+        "rare": {"baseRate": 85, "poolSize": 60, "wildcardRate": 10, "wildcardCount": 2},
+        "mythic": {"baseRate": 15, "poolSize": 20, "wildcardRate": 3, "wildcardCount": 2}
+    },
+    "mom": {
+        "common": {"slots": 9, "poolSize": 100, "wildcardRate": 18, "wildcardCount": 2},
+        "uncommon": {"slots": 3, "poolSize": 90, "wildcardRate": 45, "wildcardCount": 1},
+        "rare": {"baseRate": 80, "poolSize": 50, "wildcardRate": 12, "wildcardCount": 2},
+        "mythic": {"baseRate": 20, "poolSize": 15, "wildcardRate": 2.5, "wildcardCount": 2}
     }
 }
 
@@ -37,21 +49,26 @@ def check_card():
     if not name or not set_code:
         return jsonify({"error": "Card name and set code are required"}), 400
 
-    r = requests.get(f'https://api.scryfall.com/cards/named?fuzzy={name}&set={set_code}')
-    if r.status_code != 200:
-        return jsonify({"error": "Card not found in the specified set"}), 404
+    try:
+        r = requests.get(f'https://api.scryfall.com/cards/named?fuzzy={name}&set={set_code}')
+        if r.status_code != 200:
+            return jsonify({"error": "Card not found in the specified set"}), 404
 
-    card = r.json()
-    rarity = card['rarity']
-    config = set_odds.get(set_code.lower(), {}).get(rarity)
-    probability = calculate_odds(rarity, config)
+        card = r.json()
+        rarity = card['rarity']
+        config = set_odds.get(set_code.lower(), {}).get(rarity)
+        probability = calculate_odds(rarity, config)
 
-    return jsonify({
-        "card_name": card['name'],
-        "set": card['set'],
-        "rarity": rarity,
-        "estimated_odds": f"{probability * 100:.2f}%"
-    })
+        return jsonify({
+            "card_name": card['name'],
+            "set": card['set'],
+            "rarity": rarity,
+            "estimated_odds": f"{probability * 100:.2f}%",
+            "image_url": card.get('image_uris', {}).get('normal', "")
+        })
+
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

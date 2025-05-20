@@ -10,81 +10,165 @@
 <body>
   <div class="container">
     <h1>MTG Card Odds Checker</h1>
-    <form id="cardForm">
-      <label for="cardName">Card Name:</label>
-      <input type="text" id="cardName" name="cardName" required />
+    <form id="compareForm">
+  <div class="card-section">
+    <h2>Card 1</h2>
+    <label for="cardName1">Card Name:</label>
+    <input type="text" id="cardName1" name="cardName1" required />
+    <label for="setCode1">Set:</label>
+    <select id="setCode1" required>
+      <option value="" disabled selected>Select a set</option>
+      <option value="tdm">Tarkir: Dragonstorm (TDM)</option>
+      <option value="dsk">Duskmourne (DSK)</option>
+      <option value="lci">Lost Caverns of Ixalan (LCI)</option>
+      <option value="mom">March of the Machine (MOM)</option>
+      <option value="woe">Wilds of Eldraine (WOE)</option>
+      <option value="otj">Outlaws of Thunder Junction (OTJ)</option>
+      <option value="khm">Kaldheim (KHM)</option>
+      <option value="neo">Kamigawa: Neon Dynasty (NEO)</option>
+      <option value="bro">The Brothers’ War (BRO)</option>
+      <option value="mid">Midnight Hunt (MID)</option>
+      <option value="stx">Strixhaven: School of Mages (STX)</option>
+      <option value="znr">Zendikar Rising (ZNR)</option>
+</select>
 
-      <label for="setCode">Set Code:</label>
-      <input type="text" id="setCode" name="setCode" required />
+  </div>
 
-      <button type="submit">Check Odds</button>
-    </form>
+  <div class="card-section">
+    <h2>Card 2</h2>
+    <label for="cardName2">Card Name:</label>
+    <input type="text" id="cardName2" name="cardName2" required />
+    <label for="setCode2">Set:</label>
+    <select id="setCode2" required>
+      <option value="" disabled selected>Select a set</option>
+      <option value="tdm">Tarkir: Dragonstorm (TDM)</option>
+      <option value="dsk">Duskmourne (DSK)</option>
+      <option value="lci">Lost Caverns of Ixalan (LCI)</option>
+      <option value="mom">March of the Machine (MOM)</option>
+      <option value="woe">Wilds of Eldraine (WOE)</option>
+      <option value="otj">Outlaws of Thunder Junction (OTJ)</option>
+      <option value="khm">Kaldheim (KHM)</option>
+      <option value="neo">Kamigawa: Neon Dynasty (NEO)</option>
+      <option value="bro">The Brothers’ War (BRO)</option>
+      <option value="mid">Midnight Hunt (MID)</option>
+      <option value="stx">Strixhaven: School of Mages (STX)</option>
+      <option value="znr">Zendikar Rising (ZNR)</option>
+</select>
+
+  </div>
+
+  <label for="packCount">Number of Packs:</label>
+  <input type="number" id="packCount" name="packCount" value="30" min="1" max="500" required />
+
+  <button type="submit">Compare Odds</button>
+</form>
+
 
     <div id="result"></div>
+    <div id="cardImage" style="margin-top: 1rem;"></div>
     <canvas id="oddsChart" width="400" height="300"></canvas>
   </div>
 
   <script>
-    document.getElementById('cardForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const name = document.getElementById('cardName').value;
-      const set = document.getElementById('setCode').value;
+  document.getElementById('compareForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
 
-      const res = await fetch(`/check-card?name=${encodeURIComponent(name)}&set=${set}`);
-      const data = await res.json();
+    const card1 = document.getElementById('cardName1').value;
+    const set1 = document.getElementById('setCode1').value;
+    const card2 = document.getElementById('cardName2').value;
+    const set2 = document.getElementById('setCode2').value;
+    const packCount = parseInt(document.getElementById('packCount').value);
 
-      if (!res.ok) {
-        document.getElementById('result').innerHTML = `<p>Error: ${data.error}</p>`;
-        return;
-      }
+    const res1 = await fetch(`/check-card?name=${encodeURIComponent(card1)}&set=${set1}`);
+    const res2 = await fetch(`/check-card?name=${encodeURIComponent(card2)}&set=${set2}`);
 
-      const odds = parseFloat(data.estimated_odds.replace('%', '')) / 100;
+    const data1 = await res1.json();
+    const data2 = await res2.json();
 
-      // Calculate cumulative probabilities
-      const packs = Array.from({ length: 30 }, (_, i) => i + 1);
-      const probabilities = packs.map(n => 1 - Math.pow(1 - odds, n));
+    if (!res1.ok || !res2.ok) {
+      document.getElementById('result').innerHTML = `<p>Error: ${data1.error || data2.error}</p>`;
+      document.getElementById('cardImages').innerHTML = "";
+      return;
+    }
 
-      // Show stats
-      let stats = `
-        <strong>${data.card_name}</strong> (${data.rarity})<br/>
-        Estimated Odds in One Pack: ${(odds * 100).toFixed(2)}%<br/>
-        Odds of <u>NOT</u> getting this card in 30 packs: ${(Math.pow(1 - odds, 30) * 100).toFixed(2)}%<br/>
-        Odds of getting at least one in:<br/>
-        - 5 packs: ${(100 * (1 - Math.pow(1 - odds, 5))).toFixed(2)}%<br/>
-        - 10 packs: ${(100 * (1 - Math.pow(1 - odds, 10))).toFixed(2)}%<br/>
-        - 20 packs: ${(100 * (1 - Math.pow(1 - odds, 20))).toFixed(2)}%<br/>
-        - 30 packs: ${(100 * (1 - Math.pow(1 - odds, 30))).toFixed(2)}%<br/>
-      `;
-      document.getElementById('result').innerHTML = stats;
+    const odds1 = parseFloat(data1.estimated_odds.replace('%', '')) / 100;
+    const odds2 = parseFloat(data2.estimated_odds.replace('%', '')) / 100;
 
-      // Draw chart
-      const ctx = document.getElementById('oddsChart').getContext('2d');
-      if (window.oddsChart) {
-        window.oddsChart.destroy(); // Clear previous chart
-      }
-      window.oddsChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: packs,
-          datasets: [{
-            label: 'Chance of Getting the Card',
-            data: probabilities.map(p => (p * 100).toFixed(2)),
+    const packs = Array.from({ length: packCount }, (_, i) => i + 1);
+    const probabilities1 = packs.map(n => 1 - Math.pow(1 - odds1, n));
+    const probabilities2 = packs.map(n => 1 - Math.pow(1 - odds2, n));
+
+    let stats = `
+  <div style="margin-bottom: 1rem;">
+    <h3>${data1.card_name} (${data1.rarity})</h3>
+    <ul>
+      <li>Odds in One Pack: ${(odds1 * 100).toFixed(2)}%</li>
+      <li>Expected Copies in ${packCount} Packs: ${(packCount * odds1).toFixed(2)}</li>
+      <li>Most Likely Outcome: ~${Math.round(packCount * odds1)} copies</li>
+      <li>Chance of At Least One Copy: ${(100 * (1 - Math.pow(1 - odds1, packCount))).toFixed(2)}%</li>
+      <li>Chance of No Copies: ${(100 * Math.pow(1 - odds1, packCount)).toFixed(2)}%</li>
+    </ul>
+  </div>
+  <div>
+    <h3>${data2.card_name} (${data2.rarity})</h3>
+    <ul>
+      <li>Odds in One Pack: ${(odds2 * 100).toFixed(2)}%</li>
+      <li>Expected Copies in ${packCount} Packs: ${(packCount * odds2).toFixed(2)}</li>
+      <li>Most Likely Outcome: ~${Math.round(packCount * odds2)} copies</li>
+      <li>Chance of At Least One Copy: ${(100 * (1 - Math.pow(1 - odds2, packCount))).toFixed(2)}%</li>
+      <li>Chance of No Copies: ${(100 * Math.pow(1 - odds2, packCount)).toFixed(2)}%</li>
+    </ul>
+  </div>
+`;
+
+    document.getElementById('result').innerHTML = stats;
+
+    // Display card images
+    let imagesHtml = '';
+    if (data1.image_url) {
+      imagesHtml += `<div style="text-align: center;"><img src="${data1.image_url}" alt="${data1.card_name}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 0 6px rgba(0,0,0,0.2);"><p>${data1.card_name}</p></div>`;
+    }
+    if (data2.image_url) {
+      imagesHtml += `<div style="text-align: center;"><img src="${data2.image_url}" alt="${data2.card_name}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 0 6px rgba(0,0,0,0.2);"><p>${data2.card_name}</p></div>`;
+    }
+    document.getElementById('cardImages').innerHTML = `<div style="display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;">${imagesHtml}</div>`;
+
+
+    // Draw chart
+    const ctx = document.getElementById('oddsChart').getContext('2d');
+    if (window.oddsChart) {
+      window.oddsChart.destroy();
+    }
+    window.oddsChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: packs,
+        datasets: [
+          {
+            label: data1.card_name,
+            data: probabilities1.map(p => (p * 100).toFixed(2)),
             borderColor: 'rgba(75, 192, 192, 1)',
-            tension: 0.25,
-            fill: true,
-          }]
-        },
-        options: {
-          scales: {
-            x: { title: { display: true, text: 'Number of Packs' } },
-            y: {
-              title: { display: true, text: 'Chance (%)' },
-              min: 0, max: 100
-            }
+            fill: false
+          },
+          {
+            label: data2.card_name,
+            data: probabilities2.map(p => (p * 100).toFixed(2)),
+            borderColor: 'rgba(192, 75, 192, 1)',
+            fill: false
+          }
+        ]
+      },
+      options: {
+        scales: {
+          x: { title: { display: true, text: 'Number of Packs' } },
+          y: {
+            title: { display: true, text: 'Chance (%)' },
+            min: 0, max: 100
           }
         }
-      });
+      }
     });
-  </script>
+  });
+</script>
 </body>
 </html>
