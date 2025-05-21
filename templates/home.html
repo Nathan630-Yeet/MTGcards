@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MTG Card Odds Checker</title>
@@ -10,165 +11,224 @@
 <body>
   <div class="container">
     <h1>MTG Card Odds Checker</h1>
+    <p class="instructions">
+  Enter a card name and choose its set code to estimate the odds of opening it in booster packs. 
+  You can optionally enable "Compare a second card" to compare odds side-by-side. 
+  Set the number of packs you plan to open to update the graph and statistics.
+</p>
     <form id="compareForm">
-  <div class="card-section">
-    <h2>Card 1</h2>
-    <label for="cardName1">Card Name:</label>
-    <input type="text" id="cardName1" name="cardName1" required />
-    <label for="setCode1">Set:</label>
-    <select id="setCode1" required>
-      <option value="" disabled selected>Select a set</option>
-      <option value="tdm">Tarkir: Dragonstorm (TDM)</option>
-      <option value="dsk">Duskmourne (DSK)</option>
-      <option value="lci">Lost Caverns of Ixalan (LCI)</option>
-      <option value="mom">March of the Machine (MOM)</option>
-      <option value="woe">Wilds of Eldraine (WOE)</option>
-      <option value="otj">Outlaws of Thunder Junction (OTJ)</option>
-      <option value="khm">Kaldheim (KHM)</option>
-      <option value="neo">Kamigawa: Neon Dynasty (NEO)</option>
-      <option value="bro">The Brothers’ War (BRO)</option>
-      <option value="mid">Midnight Hunt (MID)</option>
-      <option value="stx">Strixhaven: School of Mages (STX)</option>
-      <option value="znr">Zendikar Rising (ZNR)</option>
+      <div class="card-sections-wrapper">
+        <div class="card-section">
+          <h2>Card 1</h2>
+          <label for="cardName1">Card Name:</label>
+          <div class="autocomplete-wrapper">
+            <input type="text" id="cardName1" name="cardName1" required />
+            <div id="suggestions1" class="autocomplete-suggestions"></div>
+          </div>
+          <label for="setCode1">Set:</label>
+          <select id="setCode1" required>
+          
+  <option value="" disabled selected>Loading sets...</option>
 </select>
 
-  </div>
+        </div>
 
-  <div class="card-section">
-    <h2>Card 2</h2>
-    <label for="cardName2">Card Name:</label>
-    <input type="text" id="cardName2" name="cardName2" required />
-    <label for="setCode2">Set:</label>
-    <select id="setCode2" required>
-      <option value="" disabled selected>Select a set</option>
-      <option value="tdm">Tarkir: Dragonstorm (TDM)</option>
-      <option value="dsk">Duskmourne (DSK)</option>
-      <option value="lci">Lost Caverns of Ixalan (LCI)</option>
-      <option value="mom">March of the Machine (MOM)</option>
-      <option value="woe">Wilds of Eldraine (WOE)</option>
-      <option value="otj">Outlaws of Thunder Junction (OTJ)</option>
-      <option value="khm">Kaldheim (KHM)</option>
-      <option value="neo">Kamigawa: Neon Dynasty (NEO)</option>
-      <option value="bro">The Brothers’ War (BRO)</option>
-      <option value="mid">Midnight Hunt (MID)</option>
-      <option value="stx">Strixhaven: School of Mages (STX)</option>
-      <option value="znr">Zendikar Rising (ZNR)</option>
+        <div class="card-section" id="card2Section" style="display: none;">
+          <h2>Card 2</h2>
+          <label for="cardName2">Card Name:</label>
+        
+          <div class="autocomplete-wrapper">
+            <input type="text" id="cardName2" name="cardName2" />
+            <div id="suggestions2" class="autocomplete-suggestions"></div>
+          </div>
+          <label for="setCode2">Set:</label>
+          <select id="setCode2">
+            <option value="" disabled selected>Loading sets...</option>
+          </select>
+          
 </select>
 
-  </div>
+        </div>
+      </div>
 
-  <label for="packCount">Number of Packs:</label>
-  <input type="number" id="packCount" name="packCount" value="30" min="1" max="500" required />
+      <label>
+        <input type="checkbox" id="compareToggle" />
+        Compare a second card?
+      </label>
 
-  <button type="submit">Compare Odds</button>
-</form>
+      <label for="packCount">Number of Packs:</label>
+      <input type="number" id="packCount" value="30" min="1" max="500" required />
 
+      <button type="submit">Check Odds</button>
+    </form>
 
-    <div id="result"></div>
-    <div id="cardImage" style="margin-top: 1rem;"></div>
+    <div id="cardResults" class="card-results-wrapper"></div>
     <canvas id="oddsChart" width="400" height="300"></canvas>
-  </div>
+      
+  
+</div>
 
   <script>
-  document.getElementById('compareForm').addEventListener('submit', async function (e) {
-    e.preventDefault();
+    document.getElementById('compareToggle').addEventListener('change', function () {
+      document.getElementById('card2Section').style.display = this.checked ? 'block' : 'none';
+    });
 
-    const card1 = document.getElementById('cardName1').value;
-    const set1 = document.getElementById('setCode1').value;
-    const card2 = document.getElementById('cardName2').value;
-    const set2 = document.getElementById('setCode2').value;
-    const packCount = parseInt(document.getElementById('packCount').value);
+    document.getElementById('compareForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
 
-    const res1 = await fetch(`/check-card?name=${encodeURIComponent(card1)}&set=${set1}`);
-    const res2 = await fetch(`/check-card?name=${encodeURIComponent(card2)}&set=${set2}`);
+      const card1 = document.getElementById('cardName1').value;
+      const set1 = document.getElementById('setCode1').value;
+      const card2 = document.getElementById('cardName2').value;
+      const set2 = document.getElementById('setCode2').value;
+      const packCount = parseInt(document.getElementById('packCount').value);
+      const compareSecond = document.getElementById('compareToggle').checked;
 
-    const data1 = await res1.json();
-    const data2 = await res2.json();
+      const res1 = await fetch(`/check-card?name=${encodeURIComponent(card1)}&set=${set1}`);
+      const data1 = await res1.json();
 
-    if (!res1.ok || !res2.ok) {
-      document.getElementById('result').innerHTML = `<p>Error: ${data1.error || data2.error}</p>`;
-      document.getElementById('cardImages').innerHTML = "";
-      return;
-    }
+      let res2, data2;
+      const secondCardEntered = compareSecond && card2 && set2;
 
-    const odds1 = parseFloat(data1.estimated_odds.replace('%', '')) / 100;
-    const odds2 = parseFloat(data2.estimated_odds.replace('%', '')) / 100;
+      if (secondCardEntered) {
+        res2 = await fetch(`/check-card?name=${encodeURIComponent(card2)}&set=${set2}`);
+        data2 = await res2.json();
+      }
 
-    const packs = Array.from({ length: packCount }, (_, i) => i + 1);
-    const probabilities1 = packs.map(n => 1 - Math.pow(1 - odds1, n));
-    const probabilities2 = packs.map(n => 1 - Math.pow(1 - odds2, n));
+      if (!res1.ok || (secondCardEntered && !res2.ok)) {
+        document.getElementById('cardResults').innerHTML = `<p>Error: ${data1.error || (data2 && data2.error)}</p>`;
+        return;
+      }
 
-    let stats = `
-  <div style="margin-bottom: 1rem;">
-    <h3>${data1.card_name} (${data1.rarity})</h3>
-    <ul>
-      <li>Odds in One Pack: ${(odds1 * 100).toFixed(2)}%</li>
-      <li>Expected Copies in ${packCount} Packs: ${(packCount * odds1).toFixed(2)}</li>
-      <li>Most Likely Outcome: ~${Math.round(packCount * odds1)} copies</li>
-      <li>Chance of At Least One Copy: ${(100 * (1 - Math.pow(1 - odds1, packCount))).toFixed(2)}%</li>
-      <li>Chance of No Copies: ${(100 * Math.pow(1 - odds1, packCount)).toFixed(2)}%</li>
-    </ul>
-  </div>
-  <div>
-    <h3>${data2.card_name} (${data2.rarity})</h3>
-    <ul>
-      <li>Odds in One Pack: ${(odds2 * 100).toFixed(2)}%</li>
-      <li>Expected Copies in ${packCount} Packs: ${(packCount * odds2).toFixed(2)}</li>
-      <li>Most Likely Outcome: ~${Math.round(packCount * odds2)} copies</li>
-      <li>Chance of At Least One Copy: ${(100 * (1 - Math.pow(1 - odds2, packCount))).toFixed(2)}%</li>
-      <li>Chance of No Copies: ${(100 * Math.pow(1 - odds2, packCount)).toFixed(2)}%</li>
-    </ul>
-  </div>
-`;
+      const packs = Array.from({ length: packCount }, (_, i) => i + 1);
+      const cardBlocks = [];
 
-    document.getElementById('result').innerHTML = stats;
+      const buildCardBlock = (data, odds, color) => {
+        const probabilities = packs.map(n => 1 - Math.pow(1 - odds, n));
+        return {
+          html: `
+            <div class="card-block">
+              <h3>${data.card_name} (${data.rarity})</h3>
+              <ul>
+                <li>Odds in One Pack: ${(odds * 100).toFixed(2)}%</li>
+                <li>Expected Copies in ${packCount} Packs: ${(packCount * odds).toFixed(2)}</li>
+                <li>Most Likely Outcome: ~${Math.round(packCount * odds)} copies</li>
+                <li>Chance of At Least One: ${(100 * (1 - Math.pow(1 - odds, packCount))).toFixed(2)}%</li>
+                <li>Chance of No Copies: ${(100 * Math.pow(1 - odds, packCount)).toFixed(2)}%</li>
+              </ul>
+              ${data.image_url ? `<img src="${data.image_url}" alt="${data.card_name}" class="card-image" />` : ''}
+              ${data.price ? `<p class="card-price">Price: $${parseFloat(data.price).toFixed(2)}</p>` : ''}
+            </div>
+          `,
+          label: data.card_name,
+          line: probabilities.map(p => (p * 100).toFixed(2)),
+          color
+        };
+      };
+      
+      const odds1 = parseFloat(data1.estimated_odds.replace('%', '')) / 100;
+      cardBlocks.push(buildCardBlock(data1, odds1, 'rgba(75, 192, 192, 1)'));
 
-    // Display card images
-    let imagesHtml = '';
-    if (data1.image_url) {
-      imagesHtml += `<div style="text-align: center;"><img src="${data1.image_url}" alt="${data1.card_name}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 0 6px rgba(0,0,0,0.2);"><p>${data1.card_name}</p></div>`;
-    }
-    if (data2.image_url) {
-      imagesHtml += `<div style="text-align: center;"><img src="${data2.image_url}" alt="${data2.card_name}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 0 6px rgba(0,0,0,0.2);"><p>${data2.card_name}</p></div>`;
-    }
-    document.getElementById('cardImages').innerHTML = `<div style="display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;">${imagesHtml}</div>`;
+      if (secondCardEntered) {
+        const odds2 = parseFloat(data2.estimated_odds.replace('%', '')) / 100;
+        cardBlocks.push(buildCardBlock(data2, odds2, 'rgba(192, 75, 192, 1)'));
+      }
 
+      document.getElementById('cardResults').innerHTML =
+        `<div class="card-results-inner">${cardBlocks.map(b => b.html).join('')}</div>`;
 
-    // Draw chart
-    const ctx = document.getElementById('oddsChart').getContext('2d');
-    if (window.oddsChart) {
-      window.oddsChart.destroy();
-    }
-    window.oddsChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: packs,
-        datasets: [
-          {
-            label: data1.card_name,
-            data: probabilities1.map(p => (p * 100).toFixed(2)),
-            borderColor: 'rgba(75, 192, 192, 1)',
+      const ctx = document.getElementById('oddsChart').getContext('2d');
+      if (window.oddsChart && typeof window.oddsChart.destroy === "function") {
+  window.oddsChart.destroy();
+}
+
+      window.oddsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: packs,
+          datasets: cardBlocks.map((b, i) => ({
+            label: b.label,
+            data: b.line,
+            borderColor: b.color,
             fill: false
-          },
-          {
-            label: data2.card_name,
-            data: probabilities2.map(p => (p * 100).toFixed(2)),
-            borderColor: 'rgba(192, 75, 192, 1)',
-            fill: false
-          }
-        ]
-      },
-      options: {
-        scales: {
-          x: { title: { display: true, text: 'Number of Packs' } },
-          y: {
-            title: { display: true, text: 'Chance (%)' },
-            min: 0, max: 100
+          }))
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: 'Number of Packs' } },
+            y: { title: { display: true, text: 'Chance (%)' }, min: 0, max: 100 }
           }
         }
+      });
+    });
+  </script>
+  <script>
+  async function loadSetDropdowns() {
+    const response = await fetch("https://api.scryfall.com/sets");
+    const data = await response.json();
+
+    // Filter relevant sets (no commander, only playable types)
+    const filtered = data.data.filter(set =>
+      ["core", "expansion", "remaster", "starter", "funny", "masters", "draft_innovation", "universes_beyond"].includes(set.set_type)
+      && !set.name.toLowerCase().includes("commander")
+    );
+
+    // Sort by release date descending
+    filtered.sort((a, b) => new Date(b.released_at) - new Date(a.released_at));
+
+    const optionsHtml = filtered.map(set =>
+      `<option value="${set.code}">${set.name} (${set.code.toUpperCase()})</option>`
+    ).join("");
+
+    document.getElementById("setCode1").innerHTML =
+      `<option value="" disabled selected>Select a set</option>` + optionsHtml;
+    document.getElementById("setCode2").innerHTML =
+      `<option value="" disabled selected>Select a set</option>` + optionsHtml;
+  }
+
+  loadSetDropdowns();
+</script>
+<script>
+  function setupAutocomplete(inputId, suggestionId) {
+    const input = document.getElementById(inputId);
+    const suggestionBox = document.getElementById(suggestionId);
+
+    input.addEventListener("input", async () => {
+      const query = input.value;
+      if (query.length < 2) {
+        suggestionBox.innerHTML = "";
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        suggestionBox.innerHTML = "";
+
+        data.data.forEach(name => {
+          const div = document.createElement("div");
+          div.textContent = name;
+          div.addEventListener("click", () => {
+            input.value = name;
+            suggestionBox.innerHTML = "";
+          });
+          suggestionBox.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Autocomplete error:", err);
+        suggestionBox.innerHTML = "";
       }
     });
-  });
+
+    document.addEventListener("click", (e) => {
+      if (!suggestionBox.contains(e.target) && e.target !== input) {
+        suggestionBox.innerHTML = "";
+      }
+    });
+  }
+
+  setupAutocomplete("cardName1", "suggestions1");
+  setupAutocomplete("cardName2", "suggestions2");
 </script>
+
 </body>
 </html>

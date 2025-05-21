@@ -69,6 +69,48 @@ app.get('/check-card', async (req, res) => {
     res.status(500).json({ error: 'Internal server error.' });
   }
 });
+function updateProbabilityTable(probabilityPerPack, maxPacks) {
+  const tbody = document.querySelector('#probabilityTable tbody');
+  tbody.innerHTML = '';
+
+  for (let packs = 1; packs <= maxPacks; packs++) {
+    const chanceAtLeastOne = 1 - Math.pow(1 - probabilityPerPack, packs);
+    const chanceAtLeastTwo = 1 - Math.pow(1 - probabilityPerPack, packs) - packs * probabilityPerPack * Math.pow(1 - probabilityPerPack, packs - 1);
+    const expectedCopies = packs * probabilityPerPack;
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${packs}</td>
+      <td>${(chanceAtLeastOne * 100).toFixed(2)}%</td>
+      <td>${(chanceAtLeastTwo * 100).toFixed(2)}%</td>
+      <td>${expectedCopies.toFixed(2)}</td>
+    `;
+    tbody.appendChild(row);
+  }
+}
+function fetchCardData(cardName, setCode, version) {
+  let query = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(cardName)}`;
+  if (setCode) {
+    query += `&set=${setCode}`;
+  }
+
+  fetch(query)
+    .then(response => response.json())
+    .then(data => {
+      let imageUrl = data.image_uris.normal;
+
+
+      if (version !== 'default' && data.all_parts) {
+        const altVersion = data.all_parts.find(part => part.name === cardName && part.component === version);
+        if (altVersion) {
+          imageUrl = altVersion.image_uris.normal;
+        }
+      }
+
+      // Update the card image
+      document.getElementById('cardImage').src = imageUrl;
+    });
+}
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);

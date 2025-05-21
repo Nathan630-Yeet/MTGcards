@@ -5,7 +5,6 @@ body {
   padding: 2rem;
 }
 
-/* Base: Mobile layout */
 .container {
   width: 100%;
   max-width: 600px;
@@ -14,40 +13,6 @@ body {
   padding: 2rem;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-/* Responsive layout for wider screens */
-@media (min-width: 900px) {
-  .container {
-    max-width: 100%;
-    padding: 3rem 5rem;
-  }
-
-  #result {
-    display: flex;
-    justify-content: space-between;
-    gap: 3rem;
-  }
-
-  #result > div {
-    flex: 1;
-  }
-
-  #cardImages {
-    display: flex !important;
-    gap: 2rem;
-    justify-content: center;
-  }
-
-  #cardImages > div {
-    flex: 1;
-    max-width: 400px;
-  }
-
-  canvas {
-    max-width: 100%;
-    margin-top: 2rem;
-  }
 }
 
 form {
@@ -77,14 +42,111 @@ button:hover {
   background-color: #555;
 }
 
-#result {
-  margin-top: 2rem;
+canvas {
+  display: block;
+  width: 100%;
+  max-width: 800px;
+  margin: 2rem auto;
 }
+
+.instructions {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 1.5rem;
+  background: #eef2f3;
+  padding: 1rem;
+  border-radius: 8px;
+  line-height: 1.5;
+}
+.autocomplete-suggestions {
+  border: 1px solid #ccc;
+  background: white;
+  position: absolute;
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+  width: 100%;
+  border-radius: 4px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+.autocomplete-suggestions div {
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.autocomplete-suggestions div:hover {
+  background-color: #eee;
+}
+
+.autocomplete-wrapper {
+  position: relative;
+}
+
 
 .card-section {
   border: 1px solid #ccc;
   padding: 1rem;
-  margin-bottom: 1rem;
   border-radius: 8px;
   background: #fafafa;
+  margin-bottom: 1rem;
+}
+
+.card-sections-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card-results-wrapper {
+  margin-top: 2rem;
+}
+
+.card-results-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.card-block {
+  flex: 1;
+  text-align: center;
+}
+
+.card-image {
+  max-width: 50%;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-price {
+  margin-top: 0.5rem;
+  font-weight: bold;
+}
+
+
+
+@media (min-width: 900px) {
+  .container {
+    max-width: 70%;
+    padding: 3rem 5rem;
+  }
+
+  .card-sections-wrapper {
+    flex-direction: row;
+  }
+
+  .card-section {
+    flex: 1;
+  }
+
+  .card-results-inner {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .card-block {
+    max-width: 45%;
+  }
 }
