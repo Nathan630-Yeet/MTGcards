@@ -107,10 +107,9 @@ function fetchCardData(cardName, setCode, version) {
         }
       }
 
-      // Update the card image
       document.getElementById('cardImage').src = imageUrl;
     });
-}
+} 
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);

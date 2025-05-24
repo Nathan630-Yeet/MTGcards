@@ -166,13 +166,13 @@
     const response = await fetch("https://api.scryfall.com/sets");
     const data = await response.json();
 
-    // Filter relevant sets (no commander, only playable types)
+  
     const filtered = data.data.filter(set =>
       ["core", "expansion", "remaster", "starter", "funny", "masters", "draft_innovation", "universes_beyond"].includes(set.set_type)
       && !set.name.toLowerCase().includes("commander")
     );
 
-    // Sort by release date descending
+
     filtered.sort((a, b) => new Date(b.released_at) - new Date(a.released_at));
 
     const optionsHtml = filtered.map(set =>
